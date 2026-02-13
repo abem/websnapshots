@@ -12,6 +12,7 @@ Webページのスクリーンショットをコマンドラインから簡単�
 - **カスタムサイズ**: 任意のウィンドウサイズでスクリーンショット取得
 - **プロトコル省略対応**: `https://` の省略に対応
 - **非同期処理**: Playwrightを使用した高速なページ読み込み
+- **OCR分析機能**: GLM-4V APIによる画像認識・テキスト抽出（`--analyze`）
 
 ### 画像比較 (compare_images.py)
 
@@ -100,6 +101,15 @@ python web_snapshot.py https://example.com --width 1280 --height 720
 
 # プロトコルを省略（https://が自動的に補完されます）
 python web_snapshot.py example.com
+
+# スクリーンショット取得後にOCR分析を実行（GLM-4V API）
+python web_snapshot.py https://example.com --analyze
+
+# 分析結果をJSON形式で出力
+python web_snapshot.py https://example.com --analyze --analyze-format json
+
+# 詳細な分析モード
+python web_snapshot.py https://example.com --analyze --analyze-detail detailed
 ```
 
 ### コマンドラインオプション
@@ -113,6 +123,17 @@ python web_snapshot.py example.com
 | `--wait` | - | ページ読み込み後の追加待機時間（ミリ秒） | なし |
 | `--full-page` | - | フルページスクリーンショットを取得する | false |
 | `--help` | `-h` | ヘルプを表示 | - |
+
+#### OCR分析オプション
+
+| オプション | 省略形 | 説明 | デフォルト値 |
+|-----------|--------|------|--------------|
+| `--analyze` | `-a` | スクリーンショット後にGLM-4Vで画像分析（OCR）を実行 | false |
+| `--analyze-detail` | - | 分析の詳細レベル（basic/standard/detailed） | standard |
+| `--analyze-output` | - | 分析結果の出力ファイル（拡張子でフォーマット判定） | 自動生成 |
+| `--analyze-format` | - | 分析結果の出力フォーマット（text/json/markdown） | markdown |
+| `--analyze-model` | - | 使用するGLMモデル | glm-4v |
+| `--api-key` | `-k` | GLM APIキー（省略時は環境変数GLM_API_KEYまたは.env） | - |
 
 ### 使用例
 
@@ -133,6 +154,18 @@ python web_snapshot.py https://example.com --wait 2000
 for url in https://example.com https://example.org; do
     python web_snapshot.py "$url"
 done
+
+# スクリーンショット取得後にOCR分析を実行
+python web_snapshot.py https://example.com --analyze
+
+# 分析結果をJSON形式で出力
+python web_snapshot.py https://example.com --analyze --analyze-format json
+
+# 詳細な分析モードで出力ファイルを指定
+python web_snapshot.py https://example.com --analyze --analyze-detail detailed --analyze-output report.md
+
+# APIキーを直接指定
+python web_snapshot.py https://example.com --analyze --api-key YOUR_API_KEY
 ```
 
 ### 画像比較の使い方 (compare_images.py)
