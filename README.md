@@ -436,3 +436,86 @@ glm-4v → glm-4v-plus → glm-4.6v → glm-4.5v
 
 - [ZhipuAI 公式ドキュメント](https://docs.bigmodel.cn/)
 - [GLM Cookbook](https://github.com/MetaGLM/glm-cookbook)
+
+## ドキュメント
+
+詳細なドキュメントは以下をご覧ください：
+
+| ドキュメント | 説明 |
+|------------|------|
+| [SETUP.md](SETUP.md) | セットアップガイド - インストールから動作確認まで |
+| [USAGE.md](USAGE.md) | 使用方法ガイド - 各機能の詳細な使い方と実践例 |
+| [API_REFERENCE.md](API_REFERENCE.md) | APIリファレンス - GLM-4V APIとコマンドラインリファレンス |
+| [TROUBLESHOOTING.md](TROUBLESHOOTING.md) | トラブルシューティング - よくある問題と解決方法 |
+| [DEVELOPMENT.md](DEVELOPMENT.md) | 開発ガイド - 貢献方法とコーディング規約 |
+
+## クイックリファレンス
+
+### Web スクリーンショット
+
+```bash
+# 基本使用
+web-snapshot https://example.com
+
+# モバイルサイズ
+web-snapshot https://example.com --width 375 --height 667
+
+# フルページ
+web-snapshot https://example.com --full-page
+```
+
+### 画像比較
+
+```bash
+# 基本比較
+compare-images before.png after.png
+
+# URL同士の比較
+compare-images https://example.com https://example.org
+
+# 厳密な比較
+compare-images before.png after.png --threshold 0.98
+```
+
+### AI 画像差分分析
+
+```bash
+# 基本分析
+glm-diff before.png after.png
+
+# JSONとサイドバイサイド画像出力
+glm-diff before.png after.png --json --side-by-side
+
+# URL同士の分析
+glm-diff https://example.com https://example.org
+```
+
+## プロジェクト情報
+
+- **リポジトリ**: https://github.com/abem/websnapshots
+- **ライセンス**: MIT License
+- **Python**: 3.7+
+- **主要ライブラリ**: Playwright, Pillow, imagehash, zai-sdk
+
+## 更新履歴
+
+- **2026-02-13**
+  - .envファイルからのAPIキー読み込みに対応
+  - ドキュメントを大幅に追加（SETUP, USAGE, API_REFERENCE, TROUBLESHOOTING, DEVELOPMENT）
+  - GLM-4Vモデルフォールバック機能の強化
+
+## 貢献
+
+バグ報告や機能リクエスト、プルリクエストを歓迎します。詳細は[DEVELOPMENT.md](DEVELOPMENT.md)をご覧ください。
+
+## ライセンス
+
+MIT License - 詳細は[LICENSE](LICENSE)ファイルをご覧ください。
+
+## 作者
+
+abem - https://github.com/abem
+
+---
+
+**Made with ❤️ and Python**
