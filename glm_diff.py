@@ -24,12 +24,12 @@ try:
 
     # .envファイルを複数の場所から検索
     # 優先順位: カレントディレクトリ > スクリプトディレクトリ > ホームディレクトリ
-    script_dir = Path(__file__).parent.parent  # websnapshotsディレクトリ
+    script_dir = Path(__file__).parent  # glm_diff.pyのあるディレクトリ
     home_dir = Path.home()
 
     env_paths = [
         Path('.env'),                              # カレントディレクトリ
-        script_dir / '.env',                       # スクリプトのディレクトリ
+        script_dir / '.env',                       # スクリプトのあるディレクトリ
         home_dir / '.websnapshots' / '.env',      # ~/.websnapshots/.env
         home_dir / '.env',                         # ~/.env
     ]
@@ -37,7 +37,7 @@ try:
     # 見つかった最初の.envファイルを読み込む
     for env_path in env_paths:
         if env_path.exists():
-            load_dotenv(env_path)
+            load_dotenv(env_path, override=True)  # override=Trueで確実に上書き
             break
 except ImportError:
     pass  # dotenvがない場合は環境変数を直接使用
@@ -489,7 +489,7 @@ def main() -> int:
     if not api_key:
         api_key = os.environ.get('GLM_API_KEY')
         if not api_key:
-            script_dir = Path(__file__).parent.parent
+            script_dir = Path(__file__).parent  # glm_diff.pyのあるディレクトリ
             print("エラー: APIキーが指定されていません。")
             print("以下のいずれかの方法で設定してください：")
             print(f"  1. 以下の場所に .env ファイルを作成して 'GLM_API_KEY=your_key' と記述:")
