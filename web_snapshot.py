@@ -759,6 +759,10 @@ async def main() -> int:
     return exit_code
 
 
-if __name__ == '__main__':
-    import asyncio
+def cli():
+    """コンソールスクリプト用エントリーポイント（同期ラッパー）。"""
     sys.exit(asyncio.run(main()))
+
+
+if __name__ == '__main__':
+    cli()
