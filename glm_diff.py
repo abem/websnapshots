@@ -21,7 +21,24 @@ from urllib.parse import urlparse
 # .envファイルから環境変数を読み込む
 try:
     from dotenv import load_dotenv
-    load_dotenv()
+
+    # .envファイルを複数の場所から検索
+    # 優先順位: カレントディレクトリ > スクリプトディレクトリ > ホームディレクトリ
+    script_dir = Path(__file__).parent.parent  # websnapshotsディレクトリ
+    home_dir = Path.home()
+
+    env_paths = [
+        Path('.env'),                              # カレントディレクトリ
+        script_dir / '.env',                       # スクリプトのディレクトリ
+        home_dir / '.websnapshots' / '.env',      # ~/.websnapshots/.env
+        home_dir / '.env',                         # ~/.env
+    ]
+
+    # 見つかった最初の.envファイルを読み込む
+    for env_path in env_paths:
+        if env_path.exists():
+            load_dotenv(env_path)
+            break
 except ImportError:
     pass  # dotenvがない場合は環境変数を直接使用
 
@@ -472,9 +489,14 @@ def main() -> int:
     if not api_key:
         api_key = os.environ.get('GLM_API_KEY')
         if not api_key:
+            script_dir = Path(__file__).parent.parent
             print("エラー: APIキーが指定されていません。")
             print("以下のいずれかの方法で設定してください：")
-            print("  1. .env ファイルを作成して 'GLM_API_KEY=your_key' と記述")
+            print(f"  1. 以下の場所に .env ファイルを作成して 'GLM_API_KEY=your_key' と記述:")
+            print(f"     - {Path.cwd()}/.env")
+            print(f"     - {script_dir}/.env")
+            print(f"     - ~/.websnapshots/.env")
+            print(f"     - ~/.env")
             print("  2. --api-key オプションで指定")
             print("  3. GLM_API_KEY 環境変数を設定")
             return 1
