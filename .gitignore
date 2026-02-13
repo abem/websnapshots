@@ -1,0 +1,52 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+*.egg-info/
+dist/
+build/
+
+# Virtual environments
+.venv/
+venv/
+ENV/
+env/
+
+# Playwright
+.playwright/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Test outputs
+*.png
+*.jpg
+*.jpeg
+*_report-*.md
+*_report-*.json
+glm_diff-*.png
+glm_diff_report-*.md
+glm_diff_report-*.json
+diff-*.png
+diff-*.md
+screenshot-*.png
+ai_diff-*.png
+comparison_report-*.md
+test-*.md
+test-*.json
+test_report_*.md
+test_report_*.json
+
+# Temporary files
+=*
+quick-test.md
+eval_test_*.md
+size-mismatch-report.md
+test*.png
+test_diff.png

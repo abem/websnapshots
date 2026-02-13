@@ -1,0 +1,15 @@
+# Web Snapshot Tool - Python Dependencies
+
+# Playwright for Python - Web自動化・スクリーンショット取得ライブラリ
+playwright>=1.40.0
+
+# 画像比較用ライブラリ
+Pillow>=10.0.0
+imagehash>=4.3.0
+
+# GLM API用ライブラリ
+zai-sdk>=1.0.0  # 新しいSDK（推奨）
+zhipuai>=2.1.0  # 旧SDK（フォールバック用）
+
+# Note: Playwrightのブラウザをインストールするには、以下のコマンドも実行してください:
+# playwright install chromium
