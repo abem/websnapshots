@@ -10,12 +10,20 @@ import argparse
 import asyncio
 import base64
 import json
+import os
 import sys
 import tempfile
 from datetime import datetime
 from pathlib import Path
 from typing import Optional
 from urllib.parse import urlparse
+
+# .envファイルから環境変数を読み込む
+try:
+    from dotenv import load_dotenv
+    load_dotenv()
+except ImportError:
+    pass  # dotenvがない場合は環境変数を直接使用
 
 try:
     from PIL import Image
@@ -462,11 +470,13 @@ def main() -> int:
     # APIキーの取得
     api_key = args.api_key
     if not api_key:
-        import os
         api_key = os.environ.get('GLM_API_KEY')
         if not api_key:
             print("エラー: APIキーが指定されていません。")
-            print("--api-key オプションまたは GLM_API_KEY 環境変数を設定してください。")
+            print("以下のいずれかの方法で設定してください：")
+            print("  1. .env ファイルを作成して 'GLM_API_KEY=your_key' と記述")
+            print("  2. --api-key オプションで指定")
+            print("  3. GLM_API_KEY 環境変数を設定")
             return 1
 
     # 出力ファイル名の決定

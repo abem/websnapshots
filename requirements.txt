@@ -11,5 +11,8 @@ imagehash>=4.3.0
 zai-sdk>=1.0.0  # 新しいSDK（推奨）
 zhipuai>=2.1.0  # 旧SDK（フォールバック用）
 
+# 環境変数管理
+python-dotenv>=1.0.0
+
 # Note: Playwrightのブラウザをインストールするには、以下のコマンドも実行してください:
 # playwright install chromium
