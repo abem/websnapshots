@@ -1,15 +1,22 @@
 [project]
 name = "web-snapshot"
-version = "1.0.0"
-description = "Webページのスクリーンショットを取得するCLIツール"
+version = "2.0.0"
+description = "Webページのスクリーンショットを取得するCLIツール（OCR機能付き）"
 readme = "README.md"
 requires-python = ">=3.10"
 dependencies = [
     "playwright>=1.40.0",
+    "python-dotenv>=1.0.0",
+]
+
+[project.optional-dependencies]
+ocr = [
+    "zhipuai>=2.0.0",
 ]
 
 [project.scripts]
-web-snapshot = "web_snapshot:cli"
+web-snapshot = "websnapshot.cli:cli"
+ws = "websnapshot.cli:cli"
 
 [build-system]
 requires = ["hatchling"]
