@@ -1,6 +1,10 @@
 # API リファレンス
 
-GLM-4V APIとツールのAPIリファレンスです。
+Web Snapshot Tool v2.0.0 のAPIリファレンスです。
+
+**パッケージ構成:**
+- `websnapshot` パッケージ（モジュール形式）
+- 従来のスクリプト（後方互換性のため維持）
 
 ---
 
@@ -89,15 +93,17 @@ response = client.chat.completions.create(
 
 ## Python API
 
-### web_snapshot.py
+### websnapshot パッケージ
 
 ```python
 import asyncio
-from web_snapshot import take_screenshot_from_url
+from websnapshot import take_screenshot
+from websnapshot.ocr import perform_ocr, generate_ocr_report
+from websnapshot.utils import is_valid_url, normalize_url, generate_filename
 
 # 非同期でスクリーンショットを取得
 async def capture():
-    await take_screenshot_from_url(
+    screenshot_path, ocr_path = await take_screenshot(
         url="https://example.com",
         output_path="screenshot.png",
         width=1920,
@@ -106,9 +112,25 @@ async def capture():
     )
 
 asyncio.run(capture())
+
+# OCR分析を実行
+ocr_result = perform_ocr(
+    image_path="screenshot.png",
+    api_key="your_api_key",
+    languages="ja+en",
+    model="glm-4v"
+)
+
+# OCRレポートを生成
+report = generate_ocr_report(
+    ocr_result=ocr_result,
+    image_path="screenshot.png",
+    url="https://example.com",
+    format_type="markdown"
+)
 ```
 
-### compare_images.py
+### compare_images.py（従来のスクリプト）
 
 ```python
 from compare_images import compare_images_files, create_comparison_report
@@ -130,7 +152,7 @@ report = create_comparison_report(
 )
 ```
 
-### glm_diff.py
+### glm_diff.py（従来のスクリプト）
 
 ```python
 from glm_diff import analyze_with_glm4v, generate_glm_comparison_report
@@ -156,10 +178,17 @@ report = generate_glm_comparison_report(
 
 ## コマンドラインAPI
 
-### web_snapshot.py
+### websnapshot パッケージ
 
 ```bash
+# 方法1: Pythonモジュールとして実行
+python -m websnapshot <URL> [OPTIONS]
+
+# 方法2: インストール済みコマンドを使用
 web-snapshot <URL> [OPTIONS]
+
+# 方法3: 短縮コマンドを使用
+ws <URL> [OPTIONS]
 ```
 
 | オプション | タイプ | 説明 | デフォルト |
@@ -168,11 +197,16 @@ web-snapshot <URL> [OPTIONS]
 | `--width` | int | ウィンドウ幅（px） | 1920 |
 | `--height` | int | ウィンドウ高さ（px） | 1080 |
 | `--output`, `-o` | string | 出力ファイルパス | 自動生成 |
-| `--full-page` | flag | フルページ撮影 | false |
-| `--viewport` | flag | ビューポートのみ | false |
+| `--viewport` | flag | ビューポートのみ撮影 | false（フルページ） |
 | `--wait` | int | 待機時間（ms） | なし |
+| `--ocr` | flag | OCR分析を実行 | false |
+| `--ocr-lang` | string | OCR対象言語（+区切り） | ja+en |
+| `--ocr-output` | string | OCR出力ファイルパス | 自動生成 |
+| `--ocr-format` | string | text/json/markdown | markdown |
+| `--ocr-model` | string | GLMモデル名 | glm-4v |
+| `--ocr-api-key` | string | GLM APIキー | 環境変数から取得 |
 
-### compare_images.py
+### compare_images.py（従来のスクリプト）
 
 ```bash
 compare-images <IMAGE1> <IMAGE2> [OPTIONS]
@@ -188,7 +222,7 @@ compare-images <IMAGE1> <IMAGE2> [OPTIONS]
 | `--threshold` | float | 類似度閾値（0.0-1.0） | 0.95 |
 | `--no-diff` | flag | 差分画像を生成しない | false |
 
-### glm_diff.py
+### glm_diff.py（従来のスクリプト）
 
 ```bash
 glm-diff <IMAGE1> <IMAGE2> [OPTIONS]

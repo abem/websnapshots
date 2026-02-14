@@ -45,6 +45,9 @@ git checkout -b feature/your-feature-name
 uv pip install -r requirements.txt
 uv pip install pytest black flake8 mypy
 
+# パッケージを編集可能モードでインストール（エントリーポイントを有効化）
+uv pip install -e .
+
 # 開発ツールのインストール
 playwright install chromium
 ```
@@ -58,15 +61,30 @@ websnapshots/
 ├── .github/
 │   └── workflows/       # CI/CD設定
 ├── docs/                # ドキュメント
-├── web_snapshot.py      # スクリーンショットツール
-├── compare_images.py    # 画像比較ツール
-├── glm_diff.py          # AI分析ツール
-├── ai_compare.py        # AI/OCR比較ツール（プロトタイプ）
+├── websnapshot/         # メインパッケージ
+│   ├── __init__.py      # パッケージ初期化・公開API
+│   ├── __main__.py      # モジュール実行用エントリーポイント
+│   ├── cli.py           # コマンドラインインターフェース
+│   ├── ocr.py           # OCR分析機能
+│   ├── screenshot.py    # スクリーンショット機能
+│   └── utils.py         # ユーティリティ関数
+├── web_snapshot.py      # 後方互換性ラッパー
+├── compare_images.py    # 画像比較ツール（従来）
+├── glm_diff.py          # AI分析ツール（従来）
 ├── requirements.txt     # 依存ライブラリ
-├── pyproject.toml       # プロジェクト設定
+├── pyproject.toml       # プロジェクト設定・エントリーポイント
 ├── .env.example         # 環境変数テンプレート
 └── README.md            # プロジェクト概要
 ```
+
+### パッケージ構造の説明
+
+- **websnapshot/**: メインのPythonパッケージ
+  - モジュール形式でインストール可能
+  - `python -m websnapshot` で実行可能
+  - エントリーポイント: `web-snapshot`, `ws`
+- **web_snapshot.py**: 単体スクリプトとしての実行をサポートするラッパー
+- **compare_images.py, glm_diff.py**: 従来のスクリプト（移行準備中）
 
 ---
 
@@ -147,14 +165,21 @@ pytest --cov=. --cov-report=html
 新しい機能を追加する場合は、テストも作成してください：
 
 ```python
-# tests/test_web_snapshot.py
+# tests/test_websnapshot.py
 import pytest
-from web_snapshot import take_screenshot_from_url
+from websnapshot import take_screenshot
+from webscreenshot.utils import is_valid_url, normalize_url
 
 def test_take_screenshot():
     """スクリーンショット取得のテスト"""
     # テストコード
     assert True
+
+def test_url_validation():
+    """URLバリデーションのテスト"""
+    assert is_valid_url("https://example.com") == True
+    assert is_valid_url("example.com") == True
+    assert is_valid_url("") == False
 ```
 
 ---

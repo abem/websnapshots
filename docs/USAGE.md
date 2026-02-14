@@ -18,8 +18,17 @@ Web Snapshot Toolの各機能の詳細な使用方法を説明します。
 
 ### 基本構文
 
+websnapshot パッケージは3つの方法で実行できます：
+
 ```bash
-python web_snapshot.py <URL> [オプション]
+# 方法1: Pythonモジュールとして実行
+python -m websnapshot <URL> [オプション]
+
+# 方法2: インストール済みコマンドを使用（推奨）
+web-snapshot <URL> [オプション]
+
+# 方法3: 短縮コマンドを使用
+ws <URL> [オプション]
 ```
 
 ### よく使うオプション
@@ -29,41 +38,63 @@ python web_snapshot.py <URL> [オプション]
 | `--width` | ウィンドウ幅（ピクセル） | 1920 |
 | `--height` | ウィンドウ高さ（ピクセル） | 1080 |
 | `--output`, `-o` | 出力ファイル名 | 自動生成 |
-| `--full-page` | フルページスクリーンショット | false |
-| `--viewport` | ビューポートのみ撮影 | false |
+| `--viewport` | ビューポートのみ撮影（フルページ無効） | false |
 | `--wait` | 読み込み後待機時間（ms） | なし |
+| `--ocr` | OCR分析を実行 | false |
+| `--ocr-lang` | OCR対象言語（+区切り） | ja+en |
+| `--ocr-format` | OCR出力フォーマット | markdown |
+| `--ocr-model` | 使用するGLMモデル | glm-4v |
 
 ### 使用例
 
 #### デスクトップサイズでキャプチャ
 
 ```bash
-python web_snapshot.py https://example.com
+ws https://example.com
 ```
 
 #### モバイルサイズでキャプチャ
 
 ```bash
-python web_snapshot.py https://example.com --width 375 --height 667 --output mobile.png
+ws https://example.com --width 375 --height 667 --output mobile.png
 ```
 
-#### フルページキャプチャ
+#### フルページキャプチャ（デフォルト）
 
 ```bash
-python web_snapshot.py https://example.com --full-page
+ws https://example.com --output full-page.png
+```
+
+#### ビューポートのみ撮影
+
+```bash
+ws https://example.com --viewport
 ```
 
 #### 待機時間を指定してキャプチャ
 
 ```bash
 # ページ読み込み後に3秒待機
-python web_snapshot.py https://example.com --wait 3000
+ws https://example.com --wait 3000
 ```
 
 #### 内部IPアドレスからキャプチャ
 
 ```bash
-python web_snapshot.py http://192.168.1.100:8080/
+ws http://192.168.1.100:8080/
+```
+
+#### OCR分析を実行
+
+```bash
+# 基本的なOCR分析
+ws https://example.com --ocr
+
+# JSON形式で出力
+ws https://example.com --ocr --ocr-format json
+
+# 複数言語を指定
+ws https://example.com --ocr --ocr-lang ja+en+zh
 ```
 
 ---
@@ -193,12 +224,12 @@ glm-diff http://192.168.1.129:8080/ http://192.168.1.129:8081/ --json
 
 ```bash
 # デプロイ前
-python web_snapshot.py https://staging.example.com --output before.png
+ws https://staging.example.com --output before.png
 
 # デプロイ後
-python web_snapshot.py https://staging.example.com --output after.png
+ws https://staging.example.com --output after.png
 
-# 比較
+# 比較（従来のスクリプトを使用）
 python glm_diff.py before.png after.png --json --side-by-side
 ```
 
@@ -209,7 +240,7 @@ Cronジョブで定期的にスクリーンショットを取得：
 ```bash
 # crontab -e
 # 毎時0分にスクリーンショットを保存
-0 * * * * cd ~/websnapshots && python web_snapshot.py https://example.com --output "screenshot-$(date +\%Y\%m\%d\%H\%M).png"
+0 * * * * ws https://example.com --output "/path/to/screenshots/screenshot-$(date +\%Y\%m\%d\%H\%M).png"
 ```
 
 ### シナリオ3: 複数サイトの監視
@@ -220,7 +251,7 @@ Cronジョブで定期的にスクリーンショットを取得：
 #!/bin/bash
 urls=("https://site1.com" "https://site2.com" "https://site3.com")
 for url in "${urls[@]}"; do
-    python web_snapshot.py "$url" --output "${url##*/}-$(date +%Y%m%d).png"
+    ws "$url" --output "${url##*/}-$(date +%Y%m%d).png"
 done
 ```
 
@@ -229,7 +260,21 @@ done
 A/Bテスト結果の視覚的比較：
 
 ```bash
-python glm_diff.py https://example.com?variant=A https://example.com?variant=B --json
+ws https://example.com?variant=A --output variant-a.png
+ws https://example.com?variant=B --output variant-b.png
+python glm_diff.py variant-a.png variant-b.png --json
+```
+
+### シナリオ5: OCRによるコンテンツ監視
+
+Webページのテキストコンテンツを定期監視：
+
+```bash
+# スクリーンショットとOCRレポートを同時に取得
+ws https://example.com --ocr --ocr-output reports/daily-$(date +%Y%m%d).md
+
+# 変更を検知するためにdiffを取る
+diff reports/yesterday.md reports/today.md
 ```
 
 ---
@@ -238,13 +283,24 @@ python glm_diff.py https://example.com?variant=A https://example.com?variant=B -
 
 ### エイリアス
 
-`.bashrc` または `.zshrc` に設定すると便利です：
+パッケージをインストールすると、以下のコマンドが自動的に使用可能になります：
+
+```bash
+# 標準コマンド
+web-snapshot https://example.com
+
+# 短縮コマンド
+ws https://example.com
+```
+
+仮想環境をアクティベートせずに使用する場合は、以下のエイリアスを `.bashrc` または `.zshrc` に設定すると便利です：
 
 ```bash
 # ~/.bashrc または ~/.zshrc
-alias web-snapshot='source ~/ドキュメント/websnapshots/.venv/bin/activate && python ~/ドキュメント/websnapshots/web_snapshot.py'
-alias compare-images='source ~/ドキュメント/websnapshots/.venv/bin/activate && python ~/ドキュメント/websnapshots/compare_images.py'
-alias glm-diff='source ~/ドキュメント/websnapshots/.venv/bin/activate && python ~/ドキュメント/websnapshots/glm_diff.py'
+alias ws='~/ドキュメント/websnapshots/.venv/bin/ws'
+alias web-snapshot='~/ドキュメント/websnapshots/.venv/bin/web-snapshot'
+alias compare-images='python ~/ドキュメント/websnapshots/compare_images.py'
+alias glm-diff='python ~/ドキュメント/websnapshots/glm_diff.py'
 ```
 
 ### ショートカット
@@ -252,13 +308,16 @@ alias glm-diff='source ~/ドキュメント/websnapshots/.venv/bin/activate && p
 エイリアス設定後の使用例：
 
 ```bash
-# スクリーンショット
-web-snapshot https://example.com
+# スクリーンショット（パッケージコマンド）
+ws https://example.com
 
-# 画像比較
+# スクリーンショット（OCR付き）
+ws https://example.com --ocr
+
+# 画像比較（従来のスクリプト）
 compare-images before.png after.png
 
-# AI分析
+# AI分析（従来のスクリプト）
 glm-diff before.png after.png --json
 ```
 

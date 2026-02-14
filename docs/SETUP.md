@@ -145,17 +145,44 @@ GLM_API_KEY=your_actual_api_key_here
 ### 基本動作確認
 
 ```bash
-# スクリーンショット機能
-python web_snapshot.py https://example.com
+# パッケージをインストールした後、以下の方法で実行可能です
 
-# 画像比較機能
-python compare_images.py screenshot-2024*.png screenshot-2024*.png
+# 方法1: Pythonモジュールとして実行
+python -m websnapshot https://example.com
+
+# 方法2: インストール済みコマンドを使用
+web-snapshot https://example.com
+
+# 方法3: 短縮コマンドを使用
+ws https://example.com
+
+# 方法4: 従来のスクリプトを実行（後方互換性）
+python web_snapshot.py https://example.com
+```
+
+### パッケージインストール方法
+
+pipを使用してパッケージとしてインストールすることもできます：
+
+```bash
+# 編集可能モードでインストール（開発中に推奨）
+pip install -e .
+
+# 通常インストール
+pip install .
+
+# インストール後、以下のコマンドが使用可能になります
+web-snapshot https://example.com
+ws https://example.com
 ```
 
 ### AI機能の動作確認
 
 ```bash
-# GLM-4V APIを使った画像差分分析
+# GLM-4V APIを使ったOCR分析
+ws https://example.com --ocr
+
+# GLM-4V APIを使った画像差分分析（従来のスクリプト）
 python glm_diff.py https://example.com https://example.org --json
 ```
 

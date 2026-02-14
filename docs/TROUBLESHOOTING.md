@@ -83,7 +83,10 @@ bash: python: コマンドが見つかりません
 
 ```bash
 # python3を使用する
-python3 web_snapshot.py https://example.com
+python3 -m websnapshot https://example.com
+
+# またはインストール済みのコマンドを使用
+web-snapshot https://example.com
 
 # またはエイリアスを設定
 alias python=python3
@@ -114,7 +117,7 @@ alias python=python3
 1. 書き込み権限を確認してください
 2. 別のディレクトリを指定してください
    ```bash
-   python web_snapshot.py https://example.com --output ~/Desktop/screenshot.png
+   ws https://example.com --output ~/Desktop/screenshot.png
    ```
 
 ### 画像読み込みエラー
@@ -174,6 +177,24 @@ Error code: 400 - {'error': {'code': '1211', 'message': '模型不存在，请�
 - APIキーが有効か確認してください
 - [ZhipuAI コンソール](https://open.bigmodel.cn/)でモデル利用権限を確認してください
 
+### コマンドが見つからない（インストール後）
+
+**エラーメッセージ:**
+```
+bash: web-snapshot: コマンドが見つかりません
+bash: ws: コマンドが見つかりません
+```
+
+**解決方法:**
+
+```bash
+# パッケージを編集可能モードでインストール
+pip install -e .
+
+# またはPythonモジュールとして実行
+python -m websnapshot https://example.com
+```
+
 ### python-dotenv がインポートできない
 
 **エラーメッセージ:**
@@ -200,10 +221,10 @@ pip install python-dotenv
 
 ```bash
 # 待機時間を短くする
-python web_snapshot.py https://example.com --wait 1000
+ws https://example.com --wait 1000
 
-# またはフルページを無効にする
-python web_snapshot.py https://example.com --viewport
+# またはビューポートのみ撮影
+ws https://example.com --viewport
 ```
 
 ### メモリ不足エラー
@@ -217,12 +238,12 @@ MemoryError: ...
 
 1. 画像サイズを小さくしてください
    ```bash
-   python web_snapshot.py https://example.com --width 1280 --height 720
+   ws https://example.com --width 1280 --height 720
    ```
 
-2. フルページを無効にしてください
+2. ビューポートのみ撮影にしてください
    ```bash
-   python web_snapshot.py https://example.com --viewport
+   ws https://example.com --viewport
    ```
 
 ---
@@ -236,7 +257,7 @@ MemoryError: ...
 ```bash
 # UTF-8エンコーディングを指定
 export PYTHONIOENCODING=utf-8
-python web_snapshot.py https://example.com
+ws https://example.com
 ```
 
 ### プロキシ環境下で動作しない
@@ -248,7 +269,7 @@ python web_snapshot.py https://example.com
 export HTTP_PROXY=http://proxy.example.com:8080
 export HTTPS_PROXY=http://proxy.example.com:8080
 
-python web_snapshot.py https://example.com
+ws https://example.com
 ```
 
 ### 内部IPアドレスにアクセスできない
@@ -258,7 +279,7 @@ python web_snapshot.py https://example.com
 ツールは内部IPアドレスに対応しています。以下のように指定してください：
 
 ```bash
-python web_snapshot.py http://192.168.1.100:8080/
+ws http://192.168.1.100:8080/
 ```
 
 それでも動作しない場合：
@@ -274,7 +295,7 @@ python web_snapshot.py http://192.168.1.100:8080/
 ```bash
 # 詳細ログを出力
 export DEBUG=1
-python web_snapshot.py https://example.com
+python -m websnapshot https://example.com
 ```
 
 ---

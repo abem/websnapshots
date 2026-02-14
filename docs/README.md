@@ -3,9 +3,40 @@
 Webページのスクリーンショットをコマンドラインから簡単に取得するPythonツール。
 2つの画像を比較し、差分を可視化する機能も提供します。
 
+## パッケージ構成
+
+このプロジェクトは、モジュール形式のパッケージ（`websnapshot/`）と、従来の単体スクリプト（`web_snapshot.py`、`compare_images.py`、`glm_diff.py`）の両方をサポートしています。
+
+### 実行方法
+
+```bash
+# 方法1: Pythonモジュールとして実行（推奨）
+python -m websnapshot https://example.com
+
+# 方法2: インストール済みコマンドを使用
+web-snapshot https://example.com
+
+# 方法3: 短縮コマンドを使用
+ws https://example.com
+
+# 方法4: 従来のスクリプトを実行（後方互換性）
+python web_snapshot.py https://example.com
+```
+
+### パッケージのインストール
+
+```bash
+# 編集可能モードでインストール（開発中に推奨）
+pip install -e .
+
+# インストール後、以下のコマンドが使用可能になります
+web-snapshot
+ws
+```
+
 ## 機能一覧
 
-### スクリーンショット取得 (web_snapshot.py)
+### スクリーンショット取得 (websnapshot パッケージ)
 
 - **シンプルなCLI**: コマンドラインから直感的に操作可能
 - **URLバリデーション**: 無効なURLを自動検出
@@ -14,7 +45,7 @@ Webページのスクリーンショットをコマンドラインから簡単�
 - **非同期処理**: Playwrightを使用した高速なページ読み込み
 - **OCR分析機能**: GLM-4V APIによる画像認識・テキスト抽出（`--analyze`）
 
-### 画像比較 (compare_images.py)
+### 画像比較
 
 - **複数のハッシュアルゴリズム**: aHash, pHash, dHash, wHashをサポート
 - **差分可視化**: ピクセル単位の差分を赤色で強調表示
@@ -22,7 +53,7 @@ Webページのスクリーンショットをコマンドラインから簡単�
 - **Markdownレポート**: 比較結果を構造化されたレポートとして出力
 - **詳細統計**: 異なるピクセル数、最大差分値、平均差分値を表示
 
-### AI画像差分分析 (glm_diff.py)
+### AI画像差分分析
 
 - **GLM-4V API使用**: 高度なAIによる意味的な差分分析
 - **テキスト認識**: 追加・削除・変更されたテキストを検出
@@ -89,27 +120,39 @@ export GLM_API_KEY="your_api_key_here"
 
 ### 基本的な使い方
 
-```bash
-# URLを指定してスクリーンショットを取得
-python web_snapshot.py https://example.com
+websnapshot パッケージは以下の3つの方法で実行できます：
 
+```bash
+# 方法1: Pythonモジュールとして実行
+python -m websnapshot https://example.com
+
+# 方法2: インストール済みコマンドを使用（推奨）
+web-snapshot https://example.com
+
+# 方法3: 短縮コマンドを使用
+ws https://example.com
+```
+
+#### その他の使用例
+
+```bash
 # 出力ファイル名を指定
-python web_snapshot.py https://example.com --output my-screenshot.png
+web-snapshot https://example.com --output my-screenshot.png
 
 # ウィンドウサイズを指定
-python web_snapshot.py https://example.com --width 1280 --height 720
+web-snapshot https://example.com --width 1280 --height 720
 
 # プロトコルを省略（https://が自動的に補完されます）
-python web_snapshot.py example.com
+web-snapshot example.com
 
 # スクリーンショット取得後にOCR分析を実行（GLM-4V API）
-python web_snapshot.py https://example.com --analyze
+web-snapshot https://example.com --ocr
 
 # 分析結果をJSON形式で出力
-python web_snapshot.py https://example.com --analyze --analyze-format json
+web-snapshot https://example.com --ocr --ocr-format json
 
 # 詳細な分析モード
-python web_snapshot.py https://example.com --analyze --analyze-detail detailed
+web-snapshot https://example.com --ocr --ocr-model glm-4v-plus
 ```
 
 ### コマンドラインオプション
@@ -126,49 +169,52 @@ python web_snapshot.py https://example.com --analyze --analyze-detail detailed
 
 #### OCR分析オプション
 
-| オプション | 省略形 | 説明 | デフォルト値 |
-|-----------|--------|------|--------------|
-| `--analyze` | `-a` | スクリーンショット後にGLM-4Vで画像分析（OCR）を実行 | false |
-| `--analyze-detail` | - | 分析の詳細レベル（basic/standard/detailed） | standard |
-| `--analyze-output` | - | 分析結果の出力ファイル（拡張子でフォーマット判定） | 自動生成 |
-| `--analyze-format` | - | 分析結果の出力フォーマット（text/json/markdown） | markdown |
-| `--analyze-model` | - | 使用するGLMモデル | glm-4v |
-| `--api-key` | `-k` | GLM APIキー（省略時は環境変数GLM_API_KEYまたは.env） | - |
+| オプション | 説明 | デフォルト値 |
+|-----------|------|--------------|
+| `--ocr` | スクリーンショット後にGLM-4Vで画像分析（OCR）を実行 | false |
+| `--ocr-lang` | OCR対象言語（+区切り、例: ja+en） | ja+en |
+| `--ocr-output` | 分析結果の出力ファイル（拡張子でフォーマット判定） | 自動生成 |
+| `--ocr-format` | 分析結果の出力フォーマット（text/json/markdown） | markdown |
+| `--ocr-model` | 使用するGLMモデル | glm-4v |
+| `--ocr-api-key` | GLM APIキー（省略時は環境変数GLM_API_KEYまたは.env） | - |
 
 ### 使用例
 
 ```bash
 # デフォルトサイズ（1920x1080）で取得
-python web_snapshot.py https://example.com
+web-snapshot https://example.com
 
 # モバイルサイズ（375x667）で取得
-python web_snapshot.py https://example.com --width 375 --height 667 --output mobile.png
+web-snapshot https://example.com --width 375 --height 667 --output mobile.png
 
 # フルページスクリーンショットを取得
-python web_snapshot.py https://example.com --full-page --output full-page.png
+web-snapshot https://example.com --output full-page.png
+
+# ビューポートのみ撮影
+web-snapshot https://example.com --viewport
 
 # ページ読み込み後に2秒待機してから撮影
-python web_snapshot.py https://example.com --wait 2000
+web-snapshot https://example.com --wait 2000
 
 # 複数のサイトを連続して取得
 for url in https://example.com https://example.org; do
-    python web_snapshot.py "$url"
+    web-snapshot "$url"
 done
 
 # スクリーンショット取得後にOCR分析を実行
-python web_snapshot.py https://example.com --analyze
+web-snapshot https://example.com --ocr
 
 # 分析結果をJSON形式で出力
-python web_snapshot.py https://example.com --analyze --analyze-format json
+web-snapshot https://example.com --ocr --ocr-format json
 
 # 詳細な分析モードで出力ファイルを指定
-python web_snapshot.py https://example.com --analyze --analyze-detail detailed --analyze-output report.md
+web-snapshot https://example.com --ocr --ocr-model glm-4v-plus --ocr-output report.md
 
 # APIキーを直接指定
-python web_snapshot.py https://example.com --analyze --api-key YOUR_API_KEY
+web-snapshot https://example.com --ocr --ocr-api-key YOUR_API_KEY
 ```
 
-### 画像比較の使い方 (compare_images.py)
+### 画像比較の使い方
 
 ```bash
 # 2つの画像を比較
@@ -222,7 +268,7 @@ python compare_images.py image1.png image2.png --hash-algorithm ahash
 python compare_images.py image1.png image2.png --no-diff --output quick_report.md
 ```
 
-### AI画像差分分析の使い方 (glm_diff.py)
+### AI画像差分分析の使い方
 
 ```bash
 # APIキーの設定
@@ -427,9 +473,44 @@ pip install zhipuai
 
 ## 開発情報
 
-- **言語**: Python 3
+- **言語**: Python 3.10+
+- **パッケージ構成**: モジュール形式（websnapshot/）と単体スクリプトの両方をサポート
 - **スクリーンショット**: Playwright for Python, Chromium（ヘッドレスモード）
+- **OCR分析**: GLM-4V API（ZhipuAI）
 - **画像比較**: Pillow (PIL), imagehash
+
+### パッケージモジュール構造
+
+```
+websnapshot/
+├── __init__.py      # パッケージ初期化・公開API
+├── __main__.py      # モジュール実行用エントリーポイント
+├── cli.py           # コマンドラインインターフェース
+├── ocr.py           # OCR分析機能（GLM-4V）
+├── screenshot.py    # スクリーンショット機能
+└── utils.py         # ユーティリティ関数
+```
+
+### Python API
+
+```python
+import asyncio
+from websnapshot import take_screenshot
+from websnapshot.ocr import perform_ocr, generate_ocr_report
+from websnapshot.utils import is_valid_url, normalize_url, generate_filename
+
+# スクリーンショットを取得
+async def capture():
+    screenshot_path, ocr_path = await take_screenshot(
+        url="https://example.com",
+        output_path="screenshot.png",
+        width=1920,
+        height=1080,
+        full_page=True
+    )
+
+asyncio.run(capture())
+```
 
 ## ライセンス
 
@@ -487,14 +568,23 @@ glm-4v → glm-4v-plus → glm-4.6v → glm-4.5v
 ### Web スクリーンショット
 
 ```bash
-# 基本使用
+# モジュールとして実行
+python -m websnapshot https://example.com
+
+# インストール済みコマンドを使用
 web-snapshot https://example.com
 
-# モバイルサイズ
-web-snapshot https://example.com --width 375 --height 667
+# 短縮コマンドを使用
+ws https://example.com
 
-# フルページ
-web-snapshot https://example.com --full-page
+# モバイルサイズ
+ws https://example.com --width 375 --height 667
+
+# ビューポートのみ
+ws https://example.com --viewport
+
+# OCR分析付き
+ws https://example.com --ocr
 ```
 
 ### 画像比較
@@ -527,10 +617,17 @@ glm-diff https://example.com https://example.org
 
 - **リポジトリ**: https://github.com/abem/websnapshots
 - **ライセンス**: MIT License
-- **Python**: 3.7+
-- **主要ライブラリ**: Playwright, Pillow, imagehash, zai-sdk
+- **Python**: 3.10+
+- **パッケージ**: web-snapshot v2.0.0
+- **主要ライブラリ**: Playwright, Pillow, python-dotenv, zai-sdk（OCR機能）
 
 ## 更新履歴
+
+- **2026-02-15**
+  - モジュール形式のパッケージ構造に移行（websnapshot/）
+  - 新しいエントリーポイント: `python -m websnapshot`, `web-snapshot`, `ws`
+  - OCRオプション名を変更（`--analyze` → `--ocr`）
+  - ドキュメントを新しい構造に更新
 
 - **2026-02-13**
   - .envファイルからのAPIキー読み込みに対応
