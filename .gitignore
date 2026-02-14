@@ -47,6 +47,7 @@ test_report_*.md
 test_report_*.json
 
 # Temporary files
+tmp/
 =*
 quick-test.md
 eval_test_*.md

@@ -9,7 +9,7 @@ dependencies = [
 ]
 
 [project.scripts]
-web-snapshot = "web_snapshot:main"
+web-snapshot = "web_snapshot:cli"
 
 [build-system]
 requires = ["hatchling"]
