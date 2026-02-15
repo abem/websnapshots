@@ -161,14 +161,14 @@ async def run_screenshot(args: argparse.Namespace) -> tuple[int, Optional[str], 
 
     Returns:
         tuple[int, Optional[str], Optional[str]]: (終了コード, 保存されたファイルパス, OCR結果ファイルパス)
-        エラー時は (1, None, None) を返す
+        エラー時は (error_code, error_message, None) を返す
     """
     exit_code, error_msg = validate_options(args)
     if exit_code != 0:
         return exit_code, error_msg, None
 
     if not is_valid_url(args.url):
-        return 1, f"エラー: 無効なURL '{args.url}'", None
+        return 1, f"エラー: 無効なURL '{args.url}'\n有効なURLを指定してください（例: https://example.com）", None
 
     normalized_url = normalize_url(args.url)
 
@@ -211,19 +211,7 @@ async def main() -> int:
     """
     args = parse_arguments()
 
-    exit_code, error_msg = validate_options(args)
-    if exit_code != 0:
-        print(error_msg)
-        return exit_code
-
-    if not is_valid_url(args.url):
-        print(f"エラー: 無効なURL '{args.url}'")
-        print("有効なURLを指定してください（例: https://example.com）")
-        return 1
-
-    normalized_url = normalize_url(args.url)
-
-    print(f"スクリーンショットを取得中: {normalized_url}")
+    print(f"スクリーンショットを取得中: {args.url}")
 
     exit_code, screenshot_path, ocr_path = await run_screenshot(args)
 

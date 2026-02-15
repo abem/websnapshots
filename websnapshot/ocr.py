@@ -66,6 +66,7 @@ def perform_ocr(
         fallback_models.extend(["glm-4v-plus", "glm-4.6v", "glm-4.5v"])
 
     last_error = None
+    content = None  # 変数を初期化してUnboundLocalErrorを防ぐ
 
     for try_model in fallback_models:
         try:
@@ -90,14 +91,20 @@ def perform_ocr(
 
             content = response.choices[0].message.content
 
-            # ```jsonと```を削除（もしあれば）
+            # ```jsonや```を削除（もしあれば）
             content = content.strip()
-            if content.startswith('```json'):
-                content = content[7:]
-            if content.startswith('```'):
-                content = content[3:]
-            if content.endswith('```'):
-                content = content[:-3]
+            # 複数のマークダウンコードブロックパターンに対応
+            while content.startswith('```'):
+                # 最初の```を探して削除
+                first_newline = content.find('\n')
+                if first_newline != -1:
+                    content = content[first_newline + 1:]
+                else:
+                    content = content[3:]
+                    break
+                content = content.strip()
+            while content.endswith('```'):
+                content = content[:-3].strip()
 
             result = json.loads(content.strip())
             result["_model_used"] = try_model

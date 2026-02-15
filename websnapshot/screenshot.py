@@ -5,6 +5,7 @@ Playwrightを使用してWebページのスクリーンショットを取得す�
 """
 
 import os
+import base64
 from datetime import datetime
 from typing import Optional
 
@@ -103,6 +104,7 @@ async def take_screenshot(
     Raises:
         PlaywrightError: ブラウザ操作エラー
         IOError: ファイル保存エラー
+        ValueError: APIキーが指定されていない場合
     """
     if output_path is None:
         output_path = generate_filename()
@@ -113,7 +115,7 @@ async def take_screenshot(
         try:
             page = await browser.new_page(viewport={'width': width, 'height': height})
 
-            await page.goto(url, wait_until='networkidle', timeout=30000)
+            await page.goto(url, wait_until='domcontentloaded', timeout=60000)
 
             if wait is not None and wait > 0:
                 await page.wait_for_timeout(wait)
@@ -121,7 +123,39 @@ async def take_screenshot(
             if full_page:
                 await _wait_for_page_stabilization(page)
 
-            await page.screenshot(path=output_path, full_page=full_page)
+            # CDPを使用してスクリーンショット（ChromeのCapture full size screenshotと同じ方法）
+            cdp = await page.context.new_cdp_session(page)
+
+            if full_page:
+                # フルページキャプチャ
+                result = await cdp.send('Page.captureScreenshot', {
+                    'clip': {
+                        'x': 0,
+                        'y': 0,
+                        'width': width,
+                        'height': await page.evaluate('document.documentElement.scrollHeight'),
+                        'scale': 1
+                    }
+                })
+            else:
+                # ビューポートのみキャプチャ
+                result = await cdp.send('Page.captureScreenshot', {
+                    'clip': {
+                        'x': 0,
+                        'y': 0,
+                        'width': width,
+                        'height': height,
+                        'scale': 1
+                    }
+                })
+
+            # Base64データをデコードして保存
+            import base64
+            screenshot_data = base64.b64decode(result['data'])
+            with open(output_path, 'wb') as f:
+                f.write(screenshot_data)
+
+            await cdp.detach()
 
             ocr_report_path = None
 
@@ -144,7 +178,7 @@ async def take_screenshot(
                         ext = '.json'
                     elif ocr_format == 'text':
                         ext = '.txt'
-                    ocr_output_path = f'ocr_report-{datetime.now().strftime("%Y%m%dT%H%M%S")}.md'
+                    ocr_output_path = f'ocr_report-{datetime.now().strftime("%Y%m%dT%H%M%S")}{ext}'
                 else:
                     ocr_output_path = ocr_output
 
