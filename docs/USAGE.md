@@ -281,19 +281,36 @@ diff reports/yesterday.md reports/today.md
 
 ## コマンド一覧
 
-### エイリアス
+### エイリアスの仕組みと設定
 
-パッケージをインストールすると、以下のコマンドが自動的に使用可能になります：
+#### エイリアスとは何か
 
-```bash
-# 標準コマンド
-web-snapshot https://example.com
+エイリアス（alias）は、長いコマンドを短い別名で登録できるシェルの機能です。
+仮想環境を毎回アクティベートすることなく、コマンド一つでツールを実行できるようになります。
 
-# 短縮コマンド
-ws https://example.com
+#### 仮想環境（venv）について
+
+Pythonの仮想環境は、プロジェクトごとに独立したPython環境を作成する仕組みです：
+- プロジェクトごとに異なるバージョンのライブラリをインストール可能
+- システム全体のPython環境を汚染しない
+- 依存関係の衝突を回避できる
+
+```
+websnapshots/
+├── .venv/              # 仮想環境ディレクトリ
+│   ├── bin/            # 実行可能ファイル（Linux/macOS）
+│   │   ├── python      # この環境専用のPython
+│   │   ├── ws          # インストールされたコマンド
+│   │   └── web-snapshot
+│   └── lib/            # インストールされたライブラリ
+└── ...
 ```
 
-仮想環境をアクティベートせずに使用する場合は、以下のエイリアスを `.bashrc` または `.zshrc` に設定すると便利です：
+#### エイリアスの設定方法
+
+**方法A: 仮想環境のコマンドを直接呼び出す（推奨）**
+
+`.bashrc` または `.zshrc` に以下を追加：
 
 ```bash
 # ~/.bashrc または ~/.zshrc
@@ -303,7 +320,164 @@ alias compare-images='python ~/ドキュメント/websnapshots/compare_images.py
 alias glm-diff='python ~/ドキュメント/websnapshots/glm_diff.py'
 ```
 
-### ショートカット
+**仕組み:**
+- `.venv/bin/ws` は仮想環境にインストールされたコマンドを直接実行
+- 仮想環境のPythonとライブラリが自動的に使用される
+- 毎回 `source .venv/bin/activate` する必要がない
+
+**方法B: activateしてからスクリプト実行（従来方式）**
+
+```bash
+# ~/.bashrc または ~/.zshrc
+alias web-snapshot='source ~/ドキュメント/websnapshots/.venv/bin/activate && python ~/ドキュメント/websnapshots/web_snapshot.py'
+```
+
+**仕組み:**
+- `source .venv/bin/activate` で仮想環境をシェルセッションに読み込む
+- その後、Pythonスクリプトを直接実行
+- 現在のシェル環境に仮想環境が反映される
+
+**違いの比較:**
+
+| 項目 | 方法A（推奨） | 方法B（従来） |
+|------|-------------|-------------|
+| 実行速度 | 高速（直接呼び出し） | やや遅い（activate処理） |
+| シェル環境 | 影響しない | 一時的に仮想環境が有効になる |
+| スクリプト修正 | 不要 | スクリプトパスの変更が必要 |
+| モジュール機能 | 完全にサポート | 古いスクリプトのみ対応 |
+
+#### パッケージコマンドのインストール
+
+方法Aを使用するには、パッケージをインストールする必要があります：
+
+```bash
+# プロジェクトディレクトリで
+cd ~/ドキュメント/websnapshots
+
+# 仮想環境をアクティベート
+source .venv/bin/activate
+
+# パッケージをインストール
+pip install -e .
+
+# これで ws と web-snapshot コマンドが使用可能に
+```
+
+#### 設定の反映
+
+エイリアス設定を反映させるには：
+
+```bash
+# 設定ファイルを再読み込み
+source ~/.bashrc   # Bashの場合
+# または
+source ~/.zshrc    # Zshの場合
+
+# 新しいターミナルセッションを開いても自動的に反映されます
+```
+
+#### venv 環境の導入手順（詳細）
+
+1. **仮想環境の作成**
+
+```bash
+cd ~/ドキュメント/websnapshots
+python3 -m venv .venv
+```
+
+2. **仮想環境のアクティベート**
+
+```bash
+# Linux/macOS
+source .venv/bin/activate
+
+# Windows
+.venv\Scripts\activate
+```
+
+アクティベートが成功すると、プロンプトの前に `(.venv)` が表示されます：
+```bash
+(.venv) user@host:~/ドキュメント/websnapshots$
+```
+
+3. **依存ライブラリのインストール**
+
+```bash
+pip install -r requirements.txt
+```
+
+4. **Playwright ブラウザのインストール**
+
+```bash
+playwright install chromium
+```
+
+5. **パッケージのインストール**
+
+```bash
+pip install -e .
+```
+
+これで `.venv/bin/` ディレクトリに `ws` と `web-snapshot` コマンドが作成されます。
+
+6. **仮想環境のデアクティベート**
+
+```bash
+deactivate
+```
+
+7. **エイリアスの設定と使用**
+
+```bash
+# .bashrc または .zshrc にエイリアスを追加
+echo "alias ws='~/ドキュメント/websnapshots/.venv/bin/ws'" >> ~/.bashrc
+echo "alias web-snapshot='~/ドキュメント/websnapshots/.venv/bin/web-snapshot'" >> ~/.bashrc
+
+# 設定を反映
+source ~/.bashrc
+
+# 仮想環境をアクティベートせずに使用
+ws https://example.com
+```
+
+### エイリアス使用例
+
+### 使用可能なコマンド一覧
+
+| コマンド | 説明 | ソース |
+|----------|------|--------|
+| `ws <URL>` | スクリーンショット取得（短縮形） | パッケージコマンド |
+| `web-snapshot <URL>` | スクリーンショット取得（標準） | パッケージコマンド |
+| `compare-images <img1> <img2>` | 画像比較 | Pythonスクリプト |
+| `glm-diff <img1> <img2>` | AI画像差分分析 | Pythonスクリプト |
+
+### 実行の仕組み（図解）
+
+**パッケージコマンド（ws, web-snapshot）:**
+
+```
+ユーザーが入力: ws https://example.com
+        ↓
+エイリアス展開: ~/ドキュメント/websnapshots/.venv/bin/ws https://example.com
+        ↓
+仮想環境のPython実行: .venv/bin/python -m websnapshot https://example.com
+        ↓
+websnapshotパッケージ実行: → screenshot.png
+```
+
+**従来のスクリプト（compare-images, glm-diff）:**
+
+```
+ユーザーが入力: glm-diff before.png after.png
+        ↓
+エイリアス展開: python ~/ドキュメント/websnapshots/glm_diff.py before.png after.png
+        ↓
+システムPythonで実行（または環境変数PYTHONPATH）
+        ↓
+スクリプト実行: → analysis_report.md
+```
+
+### ショートカット使用例
 
 エイリアス設定後の使用例：
 
@@ -314,11 +488,20 @@ ws https://example.com
 # スクリーンショット（OCR付き）
 ws https://example.com --ocr
 
+# フルページキャプチャ
+ws https://example.com --output full.png
+
+# モバイルサイズ
+ws https://example.com --width 375 --height 667 --output mobile.png
+
 # 画像比較（従来のスクリプト）
 compare-images before.png after.png
 
 # AI分析（従来のスクリプト）
 glm-diff before.png after.png --json
+
+# URL同士を直接比較
+glm-diff https://example.com https://example.org
 ```
 
 ---

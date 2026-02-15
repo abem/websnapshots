@@ -115,6 +115,7 @@ async def take_screenshot(
         try:
             page = await browser.new_page(viewport={'width': width, 'height': height})
 
+            # ページ読み込み
             await page.goto(url, wait_until='domcontentloaded', timeout=60000)
 
             if wait is not None and wait > 0:
@@ -123,23 +124,36 @@ async def take_screenshot(
             if full_page:
                 await _wait_for_page_stabilization(page)
 
-            # CDPを使用してスクリーンショット（ChromeのCapture full size screenshotと同じ方法）
+            # CDPを使用してスクリーンショット（Playwrightのフォント待機を回避）
             cdp = await page.context.new_cdp_session(page)
 
             if full_page:
-                # フルページキャプチャ
-                result = await cdp.send('Page.captureScreenshot', {
-                    'clip': {
-                        'x': 0,
-                        'y': 0,
-                        'width': width,
-                        'height': await page.evaluate('document.documentElement.scrollHeight'),
-                        'scale': 1
-                    }
+                # ページ全体のサイズを取得
+                layout = await cdp.send('Page.getLayoutMetrics')
+                content_width = int(layout['contentSize']['width'])
+                content_height = int(layout['contentSize']['height'])
+
+                # ビューポートをページ全体に拡大してコンテンツを全てレンダリングさせる
+                await cdp.send('Emulation.setDeviceMetricsOverride', {
+                    'mobile': False,
+                    'width': content_width,
+                    'height': content_height,
+                    'deviceScaleFactor': 1,
                 })
+                await page.wait_for_timeout(500)
+
+                # フルページスクリーンショット
+                result = await cdp.send('Page.captureScreenshot', {
+                    'format': 'png',
+                    'captureBeyondViewport': True,
+                })
+
+                # ビューポートをリセット
+                await cdp.send('Emulation.clearDeviceMetricsOverride')
             else:
                 # ビューポートのみキャプチャ
                 result = await cdp.send('Page.captureScreenshot', {
+                    'format': 'png',
                     'clip': {
                         'x': 0,
                         'y': 0,
@@ -150,7 +164,6 @@ async def take_screenshot(
                 })
 
             # Base64データをデコードして保存
-            import base64
             screenshot_data = base64.b64decode(result['data'])
             with open(output_path, 'wb') as f:
                 f.write(screenshot_data)
