@@ -41,18 +41,9 @@ def perform_ocr(
     """
     base64_img = encode_image_to_base64(image_path)
 
-    # クライアントの初期化（新旧SDK両対応）
-    try:
-        from zai import ZhipuAiClient
-        USE_NEW_SDK = True
-    except ImportError:
-        from zhipuai import ZhipuAI
-        USE_NEW_SDK = False
-
-    if USE_NEW_SDK:
-        client = ZhipuAiClient(api_key=api_key)
-    else:
-        client = ZhipuAI(api_key=api_key)
+    # クライアントの初期化（zhipuai SDKを使用）
+    from zhipuai import ZhipuAI
+    client = ZhipuAI(api_key=api_key)
 
     # 言語指定をプロンプトに追加
     prompt = OCR_PROMPT
@@ -60,10 +51,10 @@ def perform_ocr(
         lang_prompt = f"\n\n対象言語: {languages}\n以上の言語を中心にテキストを抽出してください。"
         prompt = OCR_PROMPT + lang_prompt
 
-    # フォールバックモデルのリスト
+    # フォールバックモデルのリスト（利用可能なモデル）
     fallback_models = [model]
-    if model == "glm-4v" and "glm-4v-plus" not in fallback_models:
-        fallback_models.extend(["glm-4v-plus", "glm-4.6v", "glm-4.5v"])
+    if model == "glm-4v" and "glm-5" not in fallback_models:
+        fallback_models.extend(["glm-4.7", "glm-4.6", "glm-4.5", "glm-5"])
 
     last_error = None
     content = None  # 変数を初期化してUnboundLocalErrorを防ぐ
@@ -112,7 +103,10 @@ def perform_ocr(
 
         except Exception as e:
             last_error = e
+            import traceback
             error_msg = str(e)
+            print(f"  エラー詳細: {error_msg}")
+            print(f"  トレースバック: {traceback.format_exc()}")
             if '1211' in error_msg or '模型不存在' in error_msg:
                 print(f"  モデル {try_model} は利用できません。次のモデルを試します...")
                 continue

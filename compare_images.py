@@ -12,85 +12,20 @@ import sys
 import tempfile
 from datetime import datetime
 from pathlib import Path
-from typing import Optional, Tuple
-from urllib.parse import urlparse
+from typing import Optional
 
 try:
     from PIL import Image, ImageDraw, ImageChops, ImageStat
     import imagehash
-    from playwright.async_api import async_playwright, Error as PlaywrightError
 except ImportError as e:
     missing_lib = str(e).split("'")[1] if "'" in str(e) else str(e)
     print(f"エラー: {missing_lib} がインストールされていません。")
     print("以下のコマンドでインストールしてください:")
-    print("  pip install Pillow>=10.0.0 imagehash>=4.3.0 playwright")
+    print("  pip install Pillow>=10.0.0 imagehash>=4.3.0")
     sys.exit(1)
 
-
-def is_url(text: str) -> bool:
-    """
-    文字列がURLかどうかを判定する。
-
-    Args:
-        text: 判定する文字列
-
-    Returns:
-        bool: URLの場合はTrue
-    """
-    try:
-        result = urlparse(text)
-        return all([result.scheme, result.netloc]) and result.scheme in ('http', 'https')
-    except Exception:
-        return False
-
-
-async def take_screenshot_from_url(
-    url: str,
-    output_path: str,
-    width: int = 1920,
-    height: int = 1080,
-    full_page: bool = True
-) -> str:
-    """
-    URLからスクリーンショットを取得する。
-
-    Args:
-        url: スクリーンショットを取得するURL
-        output_path: 出力ファイルパス
-        width: ビューポートの幅（ピクセル）
-        height: ビューポートの高さ（ピクセル）
-        full_page: フルページスクリーンショットを取得するかどうか
-
-    Returns:
-        str: 保存されたファイルのパス
-
-    Raises:
-        PlaywrightError: ブラウザ操作エラー
-    """
-    async with async_playwright() as p:
-        browser = await p.chromium.launch(headless=True)
-        try:
-            page = await browser.new_page(viewport={'width': width, 'height': height})
-            await page.goto(url, wait_until='networkidle', timeout=30000)
-            await page.screenshot(path=output_path, full_page=full_page)
-            return output_path
-        finally:
-            await browser.close()
-
-
-def generate_filename(prefix: str, ext: str = 'png') -> str:
-    """
-    タイムスタンプ付きのファイル名を生成する。
-
-    Args:
-        prefix: ファイル名のプレフィックス
-        ext: 拡張子（デフォルト: png）
-
-    Returns:
-        str: {prefix}-{timestamp}.{ext} 形式のファイル名
-    """
-    timestamp = datetime.now().strftime('%Y%m%dT%H%M%S')
-    return f'{prefix}-{timestamp}.{ext}'
+from websnapshot.utils import is_url, generate_filename
+from websnapshot.screenshot import take_screenshot_simple
 
 
 def load_image(path_or_url: str, temp_dir: Optional[tempfile.TemporaryDirectory] = None) -> Image.Image:
@@ -120,7 +55,7 @@ def load_image(path_or_url: str, temp_dir: Optional[tempfile.TemporaryDirectory]
 
         # 非同期関数を実行
         try:
-            asyncio.run(take_screenshot_from_url(path_or_url, str(temp_path)))
+            asyncio.run(take_screenshot_simple(path_or_url, str(temp_path)))
             return Image.open(temp_path)
         except Exception as e:
             raise IOError(f"URLからのスクリーンショット取得に失敗しました: {e}")
@@ -170,7 +105,7 @@ def compute_hashes(img: Image.Image) -> dict[str, imagehash.ImageHash]:
     }
 
 
-def resize_to_match(img1: Image.Image, img2: Image.Image) -> Tuple[Image.Image, Image.Image]:
+def resize_to_match(img1: Image.Image, img2: Image.Image) -> tuple[Image.Image, Image.Image]:
     """
     2つの画像を同じサイズにリサイズする。
 
@@ -179,7 +114,7 @@ def resize_to_match(img1: Image.Image, img2: Image.Image) -> Tuple[Image.Image, 
         img2: 2つ目の画像
 
     Returns:
-        Tuple[Image.Image, Image.Image]: リサイズされた画像ペア
+        tuple[Image.Image, Image.Image]: リサイズされた画像ペア
     """
     # 大きい方のサイズに合わせる
     target_width = max(img1.width, img2.width)
@@ -630,7 +565,7 @@ def parse_arguments() -> argparse.Namespace:
     return parser.parse_args()
 
 
-def validate_args(args: argparse.Namespace) -> Tuple[int, Optional[str]]:
+def validate_args(args: argparse.Namespace) -> tuple[int, Optional[str]]:
     """
     コマンドライン引数をバリデーションする。
 
@@ -638,7 +573,7 @@ def validate_args(args: argparse.Namespace) -> Tuple[int, Optional[str]]:
         args: パースされたコマンドライン引数
 
     Returns:
-        Tuple[int, Optional[str]]: (終了コード, エラーメッセージ)
+        tuple[int, Optional[str]]: (終了コード, エラーメッセージ)
     """
     if not args.image1 or not args.image2:
         return 1, "エラー: 2つの画像ファイルパスを指定してください"

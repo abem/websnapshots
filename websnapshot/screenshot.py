@@ -65,6 +65,43 @@ async def _wait_for_page_stabilization(page, max_iterations: int = 15, stable_it
     await page.wait_for_timeout(300)
 
 
+async def take_screenshot_simple(
+    url: str,
+    output_path: str,
+    width: int = 1920,
+    height: int = 1080,
+    full_page: bool = True
+) -> str:
+    """
+    URLからスクリーンショットを取得する（シンプル版）。
+
+    compare_images.pyなどで使用する軽量版。
+    networkidle待機を使用し、OCR機能なし。
+
+    Args:
+        url: スクリーンショットを取得するURL
+        output_path: 出力ファイルパス
+        width: ビューポートの幅（ピクセル）
+        height: ビューポートの高さ（ピクセル）
+        full_page: フルページスクリーンショットを取得するかどうか
+
+    Returns:
+        str: 保存されたファイルのパス
+
+    Raises:
+        PlaywrightError: ブラウザ操作エラー
+    """
+    async with async_playwright() as p:
+        browser = await p.chromium.launch(headless=True)
+        try:
+            page = await browser.new_page(viewport={'width': width, 'height': height})
+            await page.goto(url, wait_until='networkidle', timeout=30000)
+            await page.screenshot(path=output_path, full_page=full_page)
+            return output_path
+        finally:
+            await browser.close()
+
+
 async def take_screenshot(
     url: str,
     output_path: Optional[str] = None,

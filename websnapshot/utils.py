@@ -61,6 +61,23 @@ def is_valid_url(url: str) -> bool:
         return False
 
 
+def is_url(text: str) -> bool:
+    """
+    文字列がURLかどうかを判定する（http/httpsのみ）。
+
+    Args:
+        text: 判定する文字列
+
+    Returns:
+        bool: URLの場合はTrue
+    """
+    try:
+        result = urlparse(text)
+        return all([result.scheme, result.netloc]) and result.scheme in ('http', 'https')
+    except Exception:
+        return False
+
+
 def normalize_url(url: str) -> str:
     """
     URLを正規化する（プロトコルが省略されている場合は補完）。
