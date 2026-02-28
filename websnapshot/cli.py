@@ -6,12 +6,13 @@ Command Line Interface for Web Snapshot Tool.
 
 import argparse
 import sys
+from pathlib import Path
 from typing import Optional
 
 from playwright.async_api import Error as PlaywrightError
 
 from websnapshot.screenshot import take_screenshot
-from websnapshot.utils import is_valid_url, normalize_url
+from websnapshot.utils import is_valid_url, normalize_url, generate_filename
 
 
 def validate_options(args: argparse.Namespace) -> tuple[int, Optional[str]]:
@@ -50,14 +51,16 @@ def parse_arguments() -> argparse.Namespace:
   python -m websnapshot https://example.com
   python -m websnapshot example.com --width 1280 --height 720
   python -m websnapshot https://example.com --output my-screenshot.png
+  python -m websnapshot https://example.com --output-dir ./screenshots
   python -m websnapshot https://example.com --viewport --wait 2000
   python -m websnapshot https://example.com --ocr
-  python -m websnapshot https://example.com --ocr --ocr-format json
+  python -m websnapshot --batch urls.txt
         '''
     )
 
     parser.add_argument(
         'url',
+        nargs='?',
         help='スクリーンショットを取得するWebページのURL'
     )
 
@@ -83,6 +86,22 @@ def parse_arguments() -> argparse.Namespace:
         default=None,
         metavar='FILE',
         help='出力ファイル名（デフォルト: screenshot-{timestamp}.png）'
+    )
+
+    parser.add_argument(
+        '--output-dir',
+        type=str,
+        default=None,
+        metavar='DIR',
+        help='出力ディレクトリ（指定しない場合はカレントディレクトリ）'
+    )
+
+    parser.add_argument(
+        '--batch',
+        type=str,
+        default=None,
+        metavar='FILE',
+        help='URLリストファイルから一括処理'
     )
 
     parser.add_argument(
@@ -150,6 +169,44 @@ def parse_arguments() -> argparse.Namespace:
     return parser.parse_args()
 
 
+def validate_args(args: argparse.Namespace) -> tuple[int, Optional[str]]:
+    """
+    コマンドライン引数をバリデーションする。
+
+    Args:
+        args: パースされたコマンドライン引数
+
+    Returns:
+        tuple[int, Optional[str]]: (終了コード, エラーメッセージ)
+    """
+    if not args.url and not args.batch:
+        return 1, "エラー: URLまたは--batchオプションを指定してください"
+    return 0, None
+
+
+def resolve_output_path(args: argparse.Namespace) -> str:
+    """
+    出力パスを解決する。
+
+    Args:
+        args: パースされたコマンドライン引数
+
+    Returns:
+        str: 出力ファイルパス
+    """
+    if args.output:
+        filename = args.output
+    else:
+        filename = generate_filename()
+
+    if args.output_dir:
+        output_dir = Path(args.output_dir)
+        output_dir.mkdir(parents=True, exist_ok=True)
+        return str(output_dir / filename)
+
+    return filename
+
+
 async def run_screenshot(args: argparse.Namespace) -> tuple[int, Optional[str], Optional[str]]:
     """
     スクリーンショット取得を実行する。
@@ -171,11 +228,12 @@ async def run_screenshot(args: argparse.Namespace) -> tuple[int, Optional[str], 
         return 1, f"エラー: 無効なURL '{args.url}'\n有効なURLを指定してください（例: https://example.com）", None
 
     normalized_url = normalize_url(args.url)
+    output_path = resolve_output_path(args)
 
     try:
         saved_path, ocr_path = await take_screenshot(
             normalized_url,
-            output_path=args.output,
+            output_path=output_path,
             width=args.width,
             height=args.height,
             wait=args.wait,
@@ -202,6 +260,48 @@ async def run_screenshot(args: argparse.Namespace) -> tuple[int, Optional[str], 
         return 1, f"エラー: 予期しないエラーが発生しました: {e}", None
 
 
+async def run_batch(args: argparse.Namespace) -> int:
+    """
+    バッチ処理を実行する。
+
+    Args:
+        args: パースされたコマンドライン引数
+
+    Returns:
+        int: 終了コード
+    """
+    batch_file = Path(args.batch)
+    if not batch_file.exists():
+        print(f"エラー: バッチファイルが見つかりません: {args.batch}")
+        return 1
+
+    urls = [line.strip() for line in batch_file.read_text().splitlines() if line.strip()]
+    if not urls:
+        print("エラー: バッチファイルにURLが含まれていません")
+        return 1
+
+    print(f"バッチ処理開始: {len(urls)}件のURL")
+
+    success_count = 0
+    error_count = 0
+
+    for i, url in enumerate(urls, 1):
+        print(f"\n[{i}/{len(urls)}] {url}")
+        args.url = url
+        args.output = None  # 自動生成
+
+        exit_code, result, _ = await run_screenshot(args)
+        if exit_code == 0:
+            print(f"  ✅ 保存しました: {result}")
+            success_count += 1
+        else:
+            print(f"  ❌ {result}")
+            error_count += 1
+
+    print(f"\nバッチ処理完了: 成功 {success_count}件, エラー {error_count}件")
+    return 0 if error_count == 0 else 1
+
+
 async def main() -> int:
     """
     メイン関数。
@@ -211,6 +311,17 @@ async def main() -> int:
     """
     args = parse_arguments()
 
+    # 引数バリデーション
+    exit_code, error_msg = validate_args(args)
+    if exit_code != 0:
+        print(error_msg)
+        return exit_code
+
+    # バッチ処理
+    if args.batch:
+        return await run_batch(args)
+
+    # 単一URL処理
     print(f"スクリーンショットを取得中: {args.url}")
 
     exit_code, screenshot_path, ocr_path = await run_screenshot(args)
