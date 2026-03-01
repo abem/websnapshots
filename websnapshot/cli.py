@@ -15,9 +15,9 @@ from websnapshot.screenshot import take_screenshot
 from websnapshot.utils import is_valid_url, normalize_url, generate_filename
 
 
-def validate_options(args: argparse.Namespace) -> tuple[int, Optional[str]]:
+def validate_args(args: argparse.Namespace) -> tuple[int, Optional[str]]:
     """
-    コマンドラインオプションをバリデーションする。
+    コマンドライン引数をバリデーションする。
 
     Args:
         args: パースされたコマンドライン引数
@@ -26,11 +26,16 @@ def validate_options(args: argparse.Namespace) -> tuple[int, Optional[str]]:
         tuple[int, Optional[str]]: (終了コード, エラーメッセージ)
         エラーがない場合は (0, None) を返す
     """
-    if args.width <= 0:
+    # 必須引数チェック
+    if not args.url and not args.batch:
+        return 1, "エラー: URLまたは--batchオプションを指定してください"
+
+    # 数値オプションの範囲チェック
+    if hasattr(args, 'width') and args.width <= 0:
         return 1, "エラー: --width は正の値である必要があります"
-    if args.height <= 0:
+    if hasattr(args, 'height') and args.height <= 0:
         return 1, "エラー: --height は正の値である必要があります"
-    if args.wait is not None and args.wait < 0:
+    if hasattr(args, 'wait') and args.wait is not None and args.wait < 0:
         return 1, "エラー: --wait は0以上の値である必要があります"
 
     return 0, None
@@ -169,21 +174,6 @@ def parse_arguments() -> argparse.Namespace:
     return parser.parse_args()
 
 
-def validate_args(args: argparse.Namespace) -> tuple[int, Optional[str]]:
-    """
-    コマンドライン引数をバリデーションする。
-
-    Args:
-        args: パースされたコマンドライン引数
-
-    Returns:
-        tuple[int, Optional[str]]: (終了コード, エラーメッセージ)
-    """
-    if not args.url and not args.batch:
-        return 1, "エラー: URLまたは--batchオプションを指定してください"
-    return 0, None
-
-
 def resolve_output_path(args: argparse.Namespace) -> str:
     """
     出力パスを解決する。
@@ -220,7 +210,7 @@ async def run_screenshot(args: argparse.Namespace) -> tuple[int, Optional[str], 
         tuple[int, Optional[str], Optional[str]]: (終了コード, 保存されたファイルパス, OCR結果ファイルパス)
         エラー時は (error_code, error_message, None) を返す
     """
-    exit_code, error_msg = validate_options(args)
+    exit_code, error_msg = validate_args(args)
     if exit_code != 0:
         return exit_code, error_msg, None
 
